@@ -34,13 +34,13 @@ export function stat(b: B<"stat">, c: Ctx): SceneOut {
     <div class="label">${esc(b.label)}</div>`;
   const css = `
     #${c.id} .row { display: flex; align-items: flex-start; justify-content: center; line-height: 1; }
-    #${c.id} .num { display: inline-block; font-size: ${fs}px; font-variant-numeric: tabular-nums; letter-spacing: -0.04em;
+    #${c.id} .num { display: inline-block; font-size: ${fs}px; font-variant-numeric: tabular-nums; letter-spacing: ${c.type.upper ? "0.01em" : "-0.04em"};
       text-align: center; transform-origin: center 70%; }
     #${c.id} .aff { display: inline-block; font-size: ${Math.round(fs * 0.45)}px; color: ${c.pal.accent}; margin-top: 0.12em; }
     #${c.id} .pre { margin-right: 0.08em; }
     #${c.id} .suf { margin-left: 0.06em; }
     #${c.id} .rule { width: ${Math.round(c.size.body * 3)}px; height: ${Math.max(4, Math.round(c.size.body * 0.14))}px;
-      background: ${c.pal.accent}; margin: 0.5em 0 0.9em; transform-origin: center; }
+      background: ${c.pal.accent}; margin: ${Math.round(fs * 0.16)}px 0 ${Math.round(c.size.body * 0.8)}px; transform-origin: center; }
     #${c.id} .label { ${fontFace(c.type.body)} font-size: ${Math.round(c.size.body * 1.15)}px; line-height: 1.3; color: ${c.pal.ink};
       opacity: 0.85; max-width: ${labelW}px; text-align: center; text-wrap: balance; }`;
   const cd = countDuration(c.e);

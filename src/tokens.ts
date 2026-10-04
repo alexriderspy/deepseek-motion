@@ -79,45 +79,54 @@ export interface TypeFace {
 export interface TypePair {
   display: TypeFace;
   body: TypeFace;
-  // Display text is uppercase-free by default; tracking tightens big type.
+  // Big type is set tight; condensed capitals need none.
   displayTracking: string;
+  // Condensed display faces are designed for capitals.
+  upper?: boolean;
   description: string;
 }
 
-const inter500: TypeFace = { family: "Inter", file: "inter-latin-500-normal.woff2", weight: 500 };
+// One quiet family carries every small word in every video; only the
+// headline face changes with the mood.
+export const BODY: TypeFace = { family: "Geist", file: "geist-latin-500-normal.woff2", weight: 500 };
+export const BODY_STRONG: TypeFace = { family: "Geist", file: "geist-latin-700-normal.woff2", weight: 700 };
+export const MONO: TypeFace = { family: "Geist Mono", file: "geist-mono-latin-500-normal.woff2", weight: 500 };
+export const QUOTE_MARK: TypeFace = { family: "Instrument Serif", file: "instrument-serif-latin-400-italic.woff2", weight: 400, style: "italic" };
 
 export const TYPE_PAIRS: Record<string, TypePair> = {
-  grotesk: {
-    display: { family: "Space Grotesk", file: "space-grotesk-latin-700-normal.woff2", weight: 700 },
-    body: inter500,
-    displayTracking: "-0.035em",
-    description: "bold geometric grotesk; confident, modern, tech",
+  modern: {
+    display: { family: "Geist", file: "geist-latin-800-normal.woff2", weight: 800 },
+    body: BODY,
+    displayTracking: "-0.05em",
+    description: "tight heavy sans; clean, confident, tech and explainers",
+  },
+  punchy: {
+    display: { family: "Anton", file: "anton-latin-400-normal.woff2", weight: 400 },
+    body: BODY,
+    displayTracking: "0em",
+    upper: true,
+    description: "tall condensed capitals; hype, sports, social-first, bold claims",
+  },
+  wide: {
+    display: { family: "Unbounded", file: "unbounded-latin-700-normal.woff2", weight: 700 },
+    body: BODY,
+    displayTracking: "-0.03em",
+    description: "wide rounded sans; futuristic, crypto, gaming, launches",
   },
   editorial: {
-    display: { family: "Instrument Serif", file: "instrument-serif-latin-400-italic.woff2", weight: 400, style: "italic" },
-    body: inter500,
-    displayTracking: "-0.015em",
-    description: "elegant italic serif; essays, quotes, storytelling",
-  },
-  "mono-tech": {
-    display: { family: "JetBrains Mono", file: "jetbrains-mono-latin-700-normal.woff2", weight: 700 },
-    body: { family: "JetBrains Mono", file: "jetbrains-mono-latin-500-normal.woff2", weight: 500 },
-    displayTracking: "-0.04em",
-    description: "monospace everywhere; only when the video is mostly code or terminals",
-  },
-  clean: {
-    display: { family: "Inter", file: "inter-latin-800-normal.woff2", weight: 800 },
-    body: inter500,
-    displayTracking: "-0.045em",
-    description: "heavy neutral sans; versatile default",
+    display: QUOTE_MARK,
+    body: BODY,
+    displayTracking: "-0.01em",
+    description: "elegant italic serif; essays, stories, food, culture, quotes",
   },
 };
 
 export const FONT_SOURCES: Record<string, string> = {
-  "Inter": "@fontsource/inter",
-  "Space Grotesk": "@fontsource/space-grotesk",
+  "Geist": "@fontsource/geist",
+  "Geist Mono": "@fontsource/geist-mono",
+  "Anton": "@fontsource/anton",
+  "Unbounded": "@fontsource/unbounded",
   "Instrument Serif": "@fontsource/instrument-serif",
-  "JetBrains Mono": "@fontsource/jetbrains-mono",
 };
 
 export interface Energy {

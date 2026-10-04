@@ -27,23 +27,52 @@ function __dmApi(ctx, W, H, safe, dur, c, fonts) {
   // Deterministic noise: same i, same number, every render.
   const rand = (i) => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
   const font = (size, kind = "display") => { const f = fonts[kind] || fonts.display; return f.style + " " + f.weight + " " + Math.round(size) + "px \"" + f.family + "\""; };
+  // A fixed type scale. Free sizes are snapped to it, so every frame keeps
+  // a clear hierarchy and nothing is too small to read on a phone.
+  const S = Math.min(W, H), tall = H > W;
+  const roles = {
+    hero: { size: S * 0.17, font: "display" },
+    headline: { size: S * 0.105, font: "display" },
+    title: { size: S * 0.068, font: "display" },
+    body: { size: S * (tall ? 0.05 : 0.042), font: "body" },
+    label: { size: S * (tall ? 0.034 : 0.028), font: "strong", upper: true, tracking: 0.12, color: c.muted },
+    number: { size: S * 0.105, font: "mono" },
+  };
+  // Display sizes stay free; anything smaller than a title snaps to body or label.
+  const snap = (size) => size >= roles.title.size * 0.85 ? size : size >= (roles.label.size + roles.body.size) / 2 ? roles.body.size : roles.label.size;
+  const style = (o) => {
+    const r = roles[o.role] || {};
+    const kind = o.font || r.font || "display";
+    const size = o.role && !o.size ? r.size : snap(o.size || roles.title.size);
+    const upper = o.upper != null ? o.upper : (r.upper || (kind === "display" && fonts.display.upper));
+    // Wide tracking is for short labels only, and never more than 0.2em.
+    const tracking = Math.max(-0.06, Math.min(0.2, o.tracking != null ? o.tracking : (r.tracking || 0)));
+    return { kind, size, upper, tracking, color: o.color || r.color || c.ink };
+  };
+  const boxes = [];
   const text = (str, x, y, o = {}) => {
-    const size = o.size || H * 0.08;
+    const st = style(o);
+    let s = String(str);
+    if (st.upper) s = s.toUpperCase();
     ctx.save();
-    ctx.font = font(size, o.font || "display");
-    ctx.fillStyle = o.color || c.ink;
+    ctx.font = font(st.size, st.kind);
+    ctx.fillStyle = st.color;
     ctx.globalAlpha *= o.alpha == null ? 1 : o.alpha;
     ctx.textAlign = o.align || "center";
     ctx.textBaseline = o.baseline || "middle";
-    if (o.tracking) ctx.letterSpacing = Math.round(o.tracking * size) + "px";
-    ctx.fillText(String(str), x, y);
+    ctx.letterSpacing = (s.length > 24 ? Math.min(st.tracking, 0.04) : st.tracking) * st.size + "px";
+    ctx.fillText(s, x, y);
+    const w = ctx.measureText(s).width, align = ctx.textAlign, base = ctx.textBaseline;
+    boxes.push({ s, a: ctx.globalAlpha, x: align === "center" ? x - w / 2 : align === "right" || align === "end" ? x - w : x,
+      y: base === "middle" ? y - st.size * 0.5 : base === "top" ? y : base === "bottom" ? y - st.size : y - st.size * 0.8, w, h: st.size });
     ctx.restore();
   };
-  const measure = (str, size, kind = "display") => { ctx.save(); ctx.font = font(size, kind); const w = ctx.measureText(String(str)).width; ctx.restore(); return w; };
-  const fit = (str, maxW, maxSize, kind = "display") => { const w = measure(str, maxSize, kind); return w > maxW ? maxSize * maxW / w : maxSize; };
+  const measure = (str, size, kind = "display") => { ctx.save(); ctx.font = font(size, kind); const w = ctx.measureText(String(kind === "display" && fonts.display.upper ? String(str).toUpperCase() : str)).width; ctx.restore(); return w; };
+  // Largest size up to maxSize (or a role name) that fits maxW. Never below the label size.
+  const fit = (str, maxW, maxSize, kind = "display") => { const m = typeof maxSize === "string" ? roles[maxSize].size : maxSize; const w = measure(str, m, kind); return Math.max(roles.label.size, w > maxW ? m * maxW / w : m); };
   // Words rise into place one after another from behind a mask.
   const kinetic = (str, x, y, o = {}) => {
-    const size = o.size || H * 0.1, kind = o.font || "display", start = o.start || 0, stagger = o.stagger == null ? 0.08 : o.stagger;
+    const size = o.size || roles[o.role || "headline"].size, kind = o.font || "display", start = o.start || 0, stagger = o.stagger == null ? 0.08 : o.stagger;
     const words = String(str).split(/\s+/), gap = size * 0.28;
     const widths = words.map((w) => measure(w, size, kind));
     const total = widths.reduce((a, b) => a + b, 0) + gap * (words.length - 1);
@@ -52,7 +81,7 @@ function __dmApi(ctx, W, H, safe, dur, c, fonts) {
       const k = p(o.t, start + i * stagger, o.len || 0.7, o.ease || "outExpo");
       ctx.save();
       ctx.beginPath(); ctx.rect(cx - size * 0.1, y - size * 0.75, widths[i] + size * 0.2, size * 1.5); ctx.clip();
-      text(w, cx, y + (1 - k) * size * 1.2, { size, font: kind, color: o.highlight && o.highlight.includes(i) ? c.accent : (o.color || c.ink), align: "left" });
+      text(w, cx, y + (1 - k) * size * 1.2, { size, font: kind, tracking: 0, color: o.highlight && o.highlight.includes(i) ? c.accent : (o.color || c.ink), align: "left" });
       ctx.restore();
       cx += widths[i] + gap;
     });
@@ -65,7 +94,7 @@ function __dmApi(ctx, W, H, safe, dur, c, fonts) {
   // Zoom and rotate the whole frame around (cx, cy). Call inside save/restore.
   const camera = (zoom = 1, rot = 0, cx = W / 2, cy = H / 2) => { ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(zoom, zoom); ctx.translate(-cx, -cy); };
   const alpha = (hex, a) => { const n = parseInt(hex.slice(1, 7), 16); return "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
-  return { W, H, safe, dur, c, ease, p, clamp, lerp, rand, font, text, measure, fit, kinetic, rrect, circle, glow, noGlow, camera, alpha, PI: Math.PI, TAU: Math.PI * 2 };
+  return { W, H, safe, dur, c, roles, ease, p, clamp, lerp, rand, font, text, measure, fit, kinetic, rrect, circle, glow, noGlow, camera, alpha, PI: Math.PI, TAU: Math.PI * 2, __boxes: boxes };
 }
 `;
 
@@ -77,16 +106,19 @@ Rules:
 - No state between calls: don't push to arrays that survive the call, don't keep counters outside draw. Recompute everything from t.
 - Keep important text and shapes inside api.safe {x, y, w, h}. Backgrounds and decorations may bleed to the edges.
 - Use only api.c colors: bg, surface, ink, muted, accent, onAccent, glow. Use api.alpha(color, a) for transparency.
-- Fonts only through api.font / api.text / api.kinetic. Kinds: "display", "body", "mono".
+- Text only through api.text / api.kinetic, using a role instead of a size:
+    hero (one giant word or number), headline (the main line), title, body, label (1-3 words, small caps), number (stats and counters).
+  At most 3 roles in any frame, and one headline or hero at a time. Never space letters out; the roles handle tracking.
 - Keep it under 120 lines. Loops of up to ~400 shapes per frame are fine.
 
 api:
   W, H, dur, safe {x, y, w, h}, c {bg, surface, ink, muted, accent, onAccent, glow}, PI, TAU
   p(t, start, len, ease="outExpo") -> 0..1 eased progress of a phase. Eases: linear inCubic outCubic inOutCubic outExpo inExpo inOutExpo outBack outElastic
   ease.<name>(x), clamp(v, a=0, b=1), lerp(a, b, k), rand(i) -> 0..1
-  text(str, x, y, {size, font, color, align, baseline, alpha, tracking})
-  kinetic(str, x, y, {t, size, font, start, stagger, len, ease, align, color, highlight: [word indexes in accent]}) -> width. Words rise in from a mask one by one.
-  measure(str, size, font) -> width;  fit(str, maxW, maxSize, font) -> size that fits
+  text(str, x, y, {role, color, align, baseline, alpha})  roles: hero headline title body label number
+  kinetic(str, x, y, {t, role, size, start, stagger, len, ease, align, color, highlight: [word indexes in accent]}) -> width. Words rise in from a mask one by one.
+  fit(str, maxW, "hero" | "headline" | "title") -> the largest size up to that role that fits maxW; pass it to kinetic as size
+  measure(str, size, font) -> width
   rrect(x, y, w, h, r) / circle(x, y, r) start a path: then ctx.fill() or ctx.stroke()
   glow(color, blur) / noGlow()
   camera(zoom, rot, cx, cy) -> wrap in ctx.save()/ctx.restore(); use for slow push-ins and punchy zooms
@@ -94,7 +126,7 @@ api:
 
 What makes it look professional:
 - Motion all the time: something should be moving in every frame (slow camera drift, rotating rings, flowing particles), with a few big punchy moments.
-- Big type. A headline should fill 60-90% of the safe width. Use api.fit.
+- Big type, few words. A headline should fill 60-90% of the safe width (use api.fit). One idea per frame; no paragraphs, no dashboards of tiny labels.
 - Layered depth: a soft background layer (large faint shapes or particles), the main subject, then small sharp accents.
 - Structure time in phases with api.p: build-up (0-30%), main moment (30-80%), settle/hold (80-100%). Hold the final state readable for the last second.
 - One accent color used sparingly for what matters; everything else ink, muted and translucent.`;
@@ -152,11 +184,13 @@ for (let i = 0; i < 70; i++) {
 ctx.restore();
 // 5. Type: a big headline that fills most of the safe width, accent on the key words.
 const line = "Only 1 in 3 gets through";
-const size = api.fit(line, safe.w * 0.85, H * 0.15);
+const size = api.fit(line, safe.w * 0.85, "headline");
 api.kinetic(line, W / 2, safe.y + size * 0.6, { t, size, start: 0.5, stagger: 0.07, highlight: [1, 2, 3] });
-// 6. A live counter in the corner, computed from t, not stored.
-const passed = Math.max(0, Math.floor((t - 1.7) / 0.21) + 1);
-api.text("passed " + Math.min(passed, 24), safe.x + safe.w, safe.y + safe.h, { size: H * 0.045, font: "mono", color: c.muted, align: "right", alpha: p(t, 1.7, 0.4) });`;
+// 6. A live counter, computed from t, not stored: a label over a number.
+const passed = Math.min(24, Math.max(0, Math.floor((t - 1.7) / 0.21) + 1));
+const show = p(t, 1.7, 0.4);
+api.text("passed", safe.x + safe.w, safe.y + safe.h - api.roles.number.size * 1.1, { role: "label", align: "right", alpha: show });
+api.text(passed, safe.x + safe.w, safe.y + safe.h - api.roles.number.size * 0.4, { role: "number", color: c.accent, align: "right", alpha: show });`;
 
 export function codePrompt(brief: string, ctxInfo: { W: number; H: number; dur: number; videoTitle: string; neighbours: string }): string {
   return `${API_DOC.replace("${W}x${H}", `${ctxInfo.W}x${ctxInfo.H}`)}
@@ -193,7 +227,10 @@ export function extractCode(reply: string): string {
 function mockCtx(calls: { n: number; sig: string[] }) {
   let font = "16px x";
   const gradient = { addColorStop() {} };
-  const target: Record<string, unknown> = { canvas: { width: 0, height: 0 } };
+  const target: Record<string, unknown> = {
+    canvas: { width: 0, height: 0 }, globalAlpha: 1, lineWidth: 1, shadowBlur: 0, letterSpacing: "0px",
+    textAlign: "start", textBaseline: "alphabetic", fillStyle: "#000", strokeStyle: "#000", globalCompositeOperation: "source-over",
+  };
   return new Proxy(target, {
     get(obj, key: string) {
       if (key in obj) return obj[key];
@@ -221,6 +258,30 @@ function mockCtx(calls: { n: number; sig: string[] }) {
   });
 }
 
+interface Box { s: string; a: number; x: number; y: number; w: number; h: number }
+
+// Readable text only: overlapping lines and text running off the frame.
+// Positions ignore camera transforms, so the thresholds are forgiving.
+function textProblems(boxes: Box[], env: { W: number; H: number }, t: number): string[] {
+  const out: string[] = [];
+  const solid = boxes.filter((b) => b.a >= 0.5 && b.s.trim());
+  for (const b of solid) {
+    const over = Math.max(0, -b.x, b.x + b.w - env.W) / b.w;
+    if (over > 0.15) { out.push(`At t=${t} the text "${b.s}" runs off the frame. Keep text inside api.safe and size it with api.fit.`); break; }
+  }
+  for (let i = 0; i < solid.length; i++) for (let j = i + 1; j < solid.length; j++) {
+    const a = solid[i], b = solid[j];
+    if (a.s === b.s) continue;
+    const ix = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x));
+    const iy = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+    if (ix * iy > 0.2 * Math.min(a.w * a.h, b.w * b.h)) {
+      out.push(`At t=${t} the text "${a.s}" overlaps "${b.s}". Give every line its own space, at least one line height apart.`);
+      return out;
+    }
+  }
+  return out;
+}
+
 export interface CodeCheck {
   ok: boolean;
   problems: string[];
@@ -238,7 +299,7 @@ export function checkCode(code: string, env: { W: number; H: number; dur: number
   } catch (e) {
     return { ok: false, problems: [`Syntax error: ${(e as Error).message}`] };
   }
-  const fonts = { display: { family: "X", weight: 700, style: "normal" }, body: { family: "X", weight: 500, style: "normal" }, mono: { family: "X", weight: 500, style: "normal" } };
+  const fonts = { display: { family: "X", weight: 700, style: "normal" }, body: { family: "X", weight: 500, style: "normal" }, strong: { family: "X", weight: 700, style: "normal" }, mono: { family: "X", weight: 500, style: "normal" } };
   const colors = { bg: "#000000", surface: "#111111", ink: "#ffffff", muted: "#888888", accent: "#ff0000", onAccent: "#000000", glow: "#ff000033" };
   const safe = { x: env.W * 0.07, y: env.H * 0.09, w: env.W * 0.86, h: env.H * 0.82 };
   const sandbox = vm.createContext({ Math, Number, String, Array, Object, JSON, isFinite, parseFloat, parseInt });
@@ -248,7 +309,7 @@ export function checkCode(code: string, env: { W: number; H: number; dur: number
     const calls = { n: 0, sig: [] as string[] };
     sandbox.__ctx = mockCtx(calls);
     try {
-      vm.runInContext(`${RUNTIME}\n(function(ctx, t, api) {\n${code}\n})(__ctx, ${t}, __dmApi(__ctx, ${env.W}, ${env.H}, ${JSON.stringify(safe)}, ${env.dur}, ${JSON.stringify(colors)}, ${JSON.stringify(fonts)}));`, sandbox, { timeout: 250 });
+      vm.runInContext(`${RUNTIME}\nvar __api = __dmApi(__ctx, ${env.W}, ${env.H}, ${JSON.stringify(safe)}, ${env.dur}, ${JSON.stringify(colors)}, ${JSON.stringify(fonts)});\n(function(ctx, t, api) {\n${code}\n})(__ctx, ${t}, __api);`, sandbox, { timeout: 250 });
     } catch (e) {
       const msg = (e as Error).message;
       problems.push(/timed out/i.test(msg) ? `At t=${t} the frame took too long to draw (an endless or huge loop). Keep loops small.` : `At t=${t} it crashed: ${msg}`);
@@ -257,6 +318,7 @@ export function checkCode(code: string, env: { W: number; H: number; dur: number
     if (calls.sig.filter((s) => /^(fill|stroke|fillText|strokeText|fillRect|strokeRect|drawImage)/.test(s)).length === 0 && k >= 0.3)
       problems.push(`At t=${t} nothing is drawn. Make sure shapes and text are visible through most of the scene.`);
     frames.push(calls.sig.join("|"));
+    problems.push(...textProblems((sandbox.__api as { __boxes: Box[] }).__boxes, env, t));
   }
   if (!problems.length && new Set(frames.slice(1, 4)).size === 1) problems.push("Nothing moves: the frames at 30%, 55% and 80% are identical. Keep something in motion the whole time.");
   return { ok: problems.length === 0, problems: [...new Set(problems)] };

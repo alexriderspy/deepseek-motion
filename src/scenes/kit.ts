@@ -43,10 +43,11 @@ export function tw(method: "fromTo" | "to" | "from" | "set", sel: string, a: obj
 // Average glyph width in em for each display family, used to fit text at
 // compile time so nothing overflows the safe area.
 const GLYPH_EM: Record<string, number> = {
-  "Space Grotesk": 0.58,
+  "Geist": 0.56,
+  "Geist Mono": 0.6,
+  "Anton": 0.52,
+  "Unbounded": 0.74,
   "Instrument Serif": 0.42,
-  "JetBrains Mono": 0.6,
-  "Inter": 0.58,
 };
 
 export function fitSize(text: string, base: number, availW: number, family: string, maxLines: number): number {
@@ -90,4 +91,4 @@ export function maskedWords(text: string, opts: WordOpts = {}): string {
 }
 
 export const fontFace = (f: TypePair["display"]) =>
-  `font-family: "${f.family}"; font-weight: ${f.weight}; font-style: ${f.style ?? "normal"};`;
+  `font-family: "${f.family}"; font-weight: ${f.weight}; font-style: ${f.style ?? "normal"}; text-transform: none; letter-spacing: normal;`;

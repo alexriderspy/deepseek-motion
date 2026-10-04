@@ -1,5 +1,6 @@
 import type { Beat } from "../spec.ts";
 import { type Ctx, type SceneOut, r } from "./kit.ts";
+import { BODY_STRONG, MONO } from "../tokens.ts";
 
 // Hosts model-written draw code on a full-frame canvas and drives it from
 // the timeline, so seeking to any time repaints exactly that frame.
@@ -8,7 +9,7 @@ export function custom(b: Extract<Beat, { scene: "custom" }>, c: Ctx): SceneOut 
   const { width: W, height: H, safe: s } = c.fmt;
   const safe = { x: r(W * s.x), y: r(H * s.top), w: r(W * (1 - 2 * s.x)), h: r(H * (1 - s.top - s.bottom)) };
   const face = (f: Ctx["type"]["display"]) => ({ family: f.family, weight: f.weight, style: f.style ?? "normal" });
-  const fonts = { display: face(c.type.display), body: face(c.type.body), mono: { family: "JetBrains Mono", weight: 500, style: "normal" } };
+  const fonts = { display: { ...face(c.type.display), upper: !!c.type.upper }, body: face(c.type.body), strong: face(BODY_STRONG), mono: face(MONO) };
   const colors = { bg: c.pal.bg, surface: c.pal.surface, ink: c.pal.ink, muted: c.pal.muted, accent: c.pal.accent, onAccent: c.pal.onAccent, glow: c.pal.glow };
   const js = [`(function () {
   const cv = document.querySelector("#${c.id} .cv"), ctx = cv.getContext("2d");
@@ -16,7 +17,7 @@ export function custom(b: Extract<Beat, { scene: "custom" }>, c: Ctx): SceneOut 
   function draw(ctx, t, api) {
 ${b.code}
   }
-  const paint = (t) => { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, ${W}, ${H}); ctx.save(); try { draw(ctx, t, api); } catch (e) {} ctx.restore(); };
+  const paint = (t) => { api.__boxes.length = 0; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, ${W}, ${H}); ctx.save(); try { draw(ctx, t, api); } catch (e) {} ctx.restore(); };
   const st = { t: 0 };
   paint(0);
   tl.fromTo(st, { t: 0 }, { t: ${b.seconds}, duration: ${b.seconds}, ease: "none", onUpdate: () => paint(st.t) }, ${c.t0});

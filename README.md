@@ -87,8 +87,9 @@ arctic, mint-cream. Every one is contrast-tested, and small accent text is autom
 at 5:1. The model sees them in a different order for every prompt, because cheap models tend to take the first
 option offered.
 
-**Type pairs:** grotesk (Space Grotesk + Inter), editorial (Instrument Serif italic + Inter), mono-tech
-(JetBrains Mono), clean (Inter). Fonts ship with the project, so renders never depend on the network.
+**Type:** every small word is set in Geist, numbers and code in Geist Mono. The headline face changes with the
+mood: modern (Geist heavy), punchy (Anton condensed capitals), wide (Unbounded) or editorial (Instrument Serif
+italic). Fonts ship with the project, so renders never depend on the network.
 
 **Energies:** calm, smooth, snappy, bouncy. Each sets the easing, entrance length, stagger and travel distance.
 

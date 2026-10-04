@@ -117,7 +117,7 @@ export function steps(b: B<"steps">, c: Ctx): SceneOut {
     #${c.id} .dot { position: relative; flex: none; width: ${dot}px; height: ${dot}px; box-sizing: border-box; border-radius: 50%;
       border: 4px solid ${mix(c.pal.ink, 28)}; background: ${c.pal.bg}; display: grid; place-items: center; z-index: 1; }
     #${c.id} .num { ${fontFace(c.type.body)} font-size: ${Math.round(dot * 0.42)}px; color: ${c.pal.muted}; }
-    #${c.id} .chk { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Inter"; font-weight: 800;
+    #${c.id} .chk { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Geist"; font-weight: 700;
       font-size: ${Math.round(dot * 0.5)}px; color: ${c.pal.onAccent}; opacity: 0; }
     #${c.id} .lbl { ${fontFace(c.type.body)} font-size: ${fs}px; line-height: 1.2; color: ${c.pal.ink};
       ${vertical ? "" : `margin-top: 0.8em; max-width: ${Math.round((W / n) * 0.9)}px; text-align: center; text-wrap: balance;`} }`;

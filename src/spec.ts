@@ -117,7 +117,7 @@ export const Spec = z.object({
   title: z.string().min(1).describe("Working title; names the output folder."),
   format: z.enum(Object.keys(FORMATS) as [FormatName, ...FormatName[]]).default("16:9"),
   palette: z.enum(names(PALETTES)).default("midnight-lime"),
-  type: z.enum(names(TYPE_PAIRS)).default("grotesk"),
+  type: z.enum(names(TYPE_PAIRS)).default("modern"),
   energy: z.enum(names(ENERGIES)).default("smooth"),
   background: z.enum(BACKGROUNDS).default("glow"),
   duration: z.number().min(5).max(180).optional().describe("Target length in seconds. Set it only when the user asks for a length."),

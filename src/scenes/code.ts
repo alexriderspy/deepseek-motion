@@ -35,9 +35,9 @@ export function code(b: Extract<Beat, { scene: "code" }>, c: Ctx): SceneOut {
     #${c.id} .chrome i { display: block; width: ${Math.round(pad * 0.42)}px; height: ${Math.round(pad * 0.42)}px; border-radius: 50%; background: #ff5f57; }
     #${c.id} .chrome i:nth-child(2) { background: #febc2e; }
     #${c.id} .chrome i:nth-child(3) { background: #28c840; }
-    #${c.id} .wt { margin-left: auto; margin-right: auto; padding-right: ${pad * 1.5}px; font-family: "JetBrains Mono"; font-weight: 500;
+    #${c.id} .wt { margin-left: auto; margin-right: auto; padding-right: ${pad * 1.5}px; font-family: "Geist Mono"; font-weight: 500;
       font-size: ${Math.round(fs * 0.7)}px; color: ${c.pal.muted}; }
-    #${c.id} .src { margin: 0; padding: ${pad}px; font-family: "JetBrains Mono"; font-weight: 500; font-size: ${fs}px; line-height: 1.6;
+    #${c.id} .src { margin: 0; padding: ${pad}px; font-family: "Geist Mono"; font-weight: 500; font-size: ${fs}px; line-height: 1.6;
       color: ${c.pal.ink}; white-space: pre; }
     #${c.id} .ln { display: block; }
     #${c.id} .lt { display: inline-block; }

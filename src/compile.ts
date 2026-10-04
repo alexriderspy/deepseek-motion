@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import type { Beat, Spec } from "./spec.ts";
 import { introTime, plan } from "./timing.ts";
-import { ENERGIES, FONT_SOURCES, FORMATS, PALETTES, TYPE_PAIRS, TYPE_SCALE, type TypeFace } from "./tokens.ts";
+import { BODY_STRONG, ENERGIES, FONT_SOURCES, FORMATS, MONO, PALETTES, QUOTE_MARK, TYPE_PAIRS, TYPE_SCALE, type TypeFace } from "./tokens.ts";
 import { type Ctx, type SceneOut, r, tw } from "./scenes/kit.ts";
 import { readable } from "./color.ts";
 import { end, quote, statement, title } from "./scenes/text.ts";
@@ -78,7 +78,7 @@ export function compile(spec: Spec): Compiled {
   });
   const total = r(t);
 
-  const fonts = uniqueFonts([type.display, type.body, TYPE_PAIRS["mono-tech"].body, TYPE_PAIRS.editorial.display]);
+  const fonts = uniqueFonts([type.display, type.body, BODY_STRONG, MONO, QUOTE_MARK]);
   const dark = isDark(pal.bg);
   const bg = background(spec.background, pal, short, total, dark);
 
@@ -95,6 +95,7 @@ ${fonts.map((f) => `@font-face { font-family: "${f.family}"; src: url("assets/fo
 body { margin: 0; background: ${pal.bg}; }
 #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: ${pal.bg}; color: ${pal.ink};
   font-family: "${type.display.family}"; font-weight: ${type.display.weight}; font-style: ${type.display.style ?? "normal"};
+  text-transform: ${type.upper ? "uppercase" : "none"};
   -webkit-font-smoothing: antialiased; }
 .bg { position: absolute; inset: 0; overflow: hidden; }
 .fontload { position: absolute; left: 0; top: 0; opacity: 0.001; font-size: 10px; pointer-events: none; }
