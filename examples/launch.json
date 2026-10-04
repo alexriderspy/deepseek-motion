@@ -1,0 +1,19 @@
+{
+  "title": "deepseek-motion launch",
+  "format": "16:9",
+  "palette": "midnight-lime",
+  "type": "grotesk",
+  "energy": "snappy",
+  "background": "glow",
+  "beats": [
+    { "scene": "title", "kicker": "Introducing", "text": "Motion graphics from any model" },
+    { "scene": "statement", "text": "Cheap models write code fine. They just have terrible taste.", "highlight": "terrible taste" },
+    { "scene": "list", "title": "So the tools carry the taste", "items": ["Curated palettes and type", "Easing and timing presets", "Reading-time holds"] },
+    { "scene": "stat", "value": 0.02, "prefix": "$", "decimals": 2, "label": "to generate a video spec with DeepSeek" },
+    { "scene": "compare", "title": "Same prompt, same look", "left": { "label": "Frontier model", "value": "$0.40" }, "right": { "label": "DeepSeek", "value": "$0.02" }, "winner": "right" },
+    { "scene": "bars", "title": "Specs that render first try", "unit": "%", "bars": [ { "label": "Raw code", "value": 41 }, { "label": "Templates", "value": 78 }, { "label": "deepseek-motion", "value": 97 } ] },
+    { "scene": "code", "title": "terminal", "lines": ["$ npx deepseek-motion make \"launch video\"", "# spec ok: 7 beats, 31.4s", "render done: out/final.mp4"] },
+    { "scene": "quote", "text": "Taste in the tools, not the model.", "author": "the whole idea" },
+    { "scene": "end", "text": "deepseek-motion", "cta": "github.com/you/deepseek-motion" }
+  ]
+}

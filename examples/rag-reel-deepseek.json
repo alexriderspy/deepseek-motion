@@ -1,0 +1,47 @@
+{
+  "title": "RAG in 20 seconds",
+  "format": "9:16",
+  "palette": "midnight-lime",
+  "type": "grotesk",
+  "energy": "bouncy",
+  "background": "dots",
+  "beats": [
+    {
+      "scene": "title",
+      "text": "RAG, explained fast",
+      "kicker": "AI Basics"
+    },
+    {
+      "scene": "statement",
+      "text": "LLMs forget stuff. RAG hands them a library card.",
+      "highlight": "library card"
+    },
+    {
+      "scene": "list",
+      "title": "How it works",
+      "items": [
+        "Search your own docs",
+        "Grab the best bits",
+        "Answer with sources"
+      ]
+    },
+    {
+      "scene": "compare",
+      "title": "Spot the difference",
+      "left": {
+        "label": "Plain LLM",
+        "value": "Guesses"
+      },
+      "right": {
+        "label": "RAG",
+        "value": "Cites sources"
+      },
+      "winner": "right"
+    },
+    {
+      "scene": "end",
+      "text": "Go build one",
+      "cta": "Try it in Colab"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "title": "kitchen sink",
+  "format": "16:9",
+  "palette": "paper-ink",
+  "type": "editorial",
+  "energy": "smooth",
+  "background": "grid",
+  "beats": [
+    { "scene": "title", "kicker": "Every scene once", "text": "A deliberately long seven word headline" },
+    { "scene": "statement", "text": "This sentence is exactly sixteen words long so we can see how the longest one wraps.", "highlight": "longest one wraps" },
+    { "scene": "stat", "value": 1250000, "suffix": "+", "label": "the longest label allowed is ten words long like this" },
+    { "scene": "list", "title": "Six word titles are the limit", "items": ["Items can be six words long", "Short one", "Another item with several words here", "Fourth", "Fifth and final list item"] },
+    { "scene": "quote", "text": "A quote may run up to twenty four words, which is long enough for a real thought with a little room to breathe.", "author": "Someone Notable" },
+    { "scene": "compare", "title": "Left versus right side", "left": { "label": "Four words on left", "value": "$1,240" }, "right": { "label": "Four words on right", "value": "12 min" }, "winner": "left" },
+    { "scene": "bars", "title": "Six bars with long labels", "unit": "%", "bars": [ { "label": "Three word label", "value": 92 }, { "label": "Two words", "value": 71 }, { "label": "One", "value": 55 }, { "label": "Fourth bar here", "value": 30 }, { "label": "Fifth", "value": 12.5 }, { "label": "Sixth bar", "value": 4 } ] },
+    { "scene": "code", "title": "app.py", "lines": ["# eight lines, forty six characters at most", "def handler(event, context):", "    items = fetch_items(event[\"user_id\"])", "    total = sum(i.price for i in items)", "    if total > 100:", "        return {\"discount\": 0.15}", "    return {\"discount\": 0}", ""] },
+    { "scene": "end", "text": "Six words is the end limit", "cta": "a call to action of six" }
+  ]
+}
