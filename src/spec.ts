@@ -83,8 +83,23 @@ export const EndBeat = z.object({
   hold,
 });
 
+export const FlowBeat = z.object({
+  scene: z.literal("flow"),
+  title: z.string().optional().describe("Up to 6 words."),
+  nodes: z.array(z.string().min(1)).min(2).max(5).describe("2-5 stages, each up to 3 words. Data visibly travels from one to the next."),
+  caption: z.string().optional().describe("One line under the diagram. Up to 12 words."),
+  hold,
+});
+
+export const StepsBeat = z.object({
+  scene: z.literal("steps"),
+  title: z.string().optional().describe("Up to 6 words."),
+  steps: z.array(z.string().min(1)).min(2).max(6).describe("2-6 steps in order, each up to 5 words. They tick off one by one."),
+  hold,
+});
+
 export const Beat = z.discriminatedUnion("scene", [
-  TitleBeat, StatementBeat, StatBeat, ListBeat, QuoteBeat, CompareBeat, BarsBeat, CodeBeat, EndBeat,
+  TitleBeat, StatementBeat, StatBeat, ListBeat, QuoteBeat, CompareBeat, BarsBeat, CodeBeat, FlowBeat, StepsBeat, EndBeat,
 ]);
 export type Beat = z.infer<typeof Beat>;
 export type SceneName = Beat["scene"];
@@ -98,6 +113,7 @@ export const Spec = z.object({
   type: z.enum(names(TYPE_PAIRS)).default("grotesk"),
   energy: z.enum(names(ENERGIES)).default("smooth"),
   background: z.enum(BACKGROUNDS).default("glow"),
+  duration: z.number().min(5).max(180).optional().describe("Target length in seconds. Set it only when the user asks for a length."),
   beats: z.array(Beat).min(1).max(12),
 });
 export type Spec = z.infer<typeof Spec>;

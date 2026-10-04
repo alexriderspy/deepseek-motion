@@ -2,18 +2,19 @@ import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import type { Beat, Spec } from "./spec.ts";
-import { beatDuration, introTime } from "./timing.ts";
+import { introTime, plan } from "./timing.ts";
 import { ENERGIES, FONT_SOURCES, FORMATS, PALETTES, TYPE_PAIRS, TYPE_SCALE, type TypeFace } from "./tokens.ts";
 import { type Ctx, type SceneOut, r, tw } from "./scenes/kit.ts";
 import { readable } from "./color.ts";
 import { end, quote, statement, title } from "./scenes/text.ts";
 import { bars, compare, list, stat } from "./scenes/data.ts";
 import { code } from "./scenes/code.ts";
+import { flow, steps } from "./scenes/diagram.ts";
 
 const require = createRequire(import.meta.url);
 
 const SCENES: { [K in Beat["scene"]]: (b: Extract<Beat, { scene: K }>, c: Ctx) => SceneOut } = {
-  title, statement, stat, list, quote, compare, bars, code, end,
+  title, statement, stat, list, quote, compare, bars, code, flow, steps, end,
 };
 
 export interface Timeline {
@@ -51,10 +52,13 @@ export function compile(spec: Spec): Compiled {
   const sections: string[] = [];
   const css: string[] = [];
   const js: string[] = [];
+  const durations = plan(spec).durations;
+  // Fast energies cut between beats with an accent wipe; slow ones fade.
+  const wipe = spec.energy === "snappy" || spec.energy === "bouncy";
 
   spec.beats.forEach((b, i) => {
     const id = `b${i}`;
-    const dur = beatDuration(b, spec);
+    const dur = durations[i];
     const ctx: Ctx = { id, t0: r(t), dur, intro: introTime(b, e), e, pal, type, fmt, size, availW, portrait, travel };
     const out = (SCENES[b.scene] as (b: Beat, c: Ctx) => SceneOut)(b, ctx);
     sections.push(`<section id="${id}" class="clip scene" data-start="${r(t)}" data-duration="${dur}" data-track-index="1">
@@ -64,7 +68,8 @@ export function compile(spec: Spec): Compiled {
     js.push(`// ${id}: ${b.scene}`, ...out.js);
     // The last beat holds its final frame instead of leaving.
     if (i < spec.beats.length - 1) {
-      js.push(tw("to", `#${id} .stage`, { opacity: 0, y: -travel / 2, duration: e.exit, ease: "power2.in" }, t + dur - e.exit));
+      if (wipe) js.push(...wipeAt(t + dur, i));
+      else js.push(tw("to", `#${id} .stage`, { opacity: 0, y: -travel / 2, duration: e.exit, ease: "power2.in" }, t + dur - e.exit));
     }
     timeline.push({ scene: b.scene, start: r(t), duration: dur });
     t += dur;
@@ -100,6 +105,7 @@ body { margin: 0; background: ${pal.bg}; }
 .mark { position: absolute; left: -0.14em; right: -0.14em; top: 0.1em; bottom: 0.02em; border-radius: 0.1em; background: ${pal.accent};
   transform-origin: left center; z-index: 0; }
 ${bg.css}
+.wipe { position: absolute; inset: 0; background: ${pal.accent}; z-index: 5; }
 ${css.join("\n")}
 </style>
 </head>
@@ -107,10 +113,12 @@ ${css.join("\n")}
 <div id="root" data-composition-id="main" data-start="0" data-width="${fmt.width}" data-height="${fmt.height}" data-duration="${total}" data-fps="30">
   <div class="bg">${bg.html}</div>
   ${sections.join("\n  ")}
+  ${wipe ? `<div class="wipe"></div>` : ""}
   <div class="vignette"></div>
 </div>
 <script>
 const tl = gsap.timeline({ paused: true });
+${wipe ? tw("set", ".wipe", { clipPath: "inset(0% 100% 0% 0%)" }, 0) : ""}
 ${bg.js.join("\n")}
 ${js.join("\n")}
 window.__timelines["main"] = tl;
@@ -119,6 +127,19 @@ window.__timelines["main"] = tl;
 </html>
 `;
   return { html, fonts, duration: total, beats: timeline };
+}
+
+// The accent panel covers the cut at time T, alternating horizontal and
+// vertical sweeps. Every tween is fromTo with immediateRender off, so any
+// frame can be seeked to directly.
+function wipeAt(T: number, i: number): string[] {
+  const [inFrom, inTo, outFrom, outTo] = i % 2 === 0
+    ? ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 0%)", "inset(0% 0% 0% 0%)", "inset(0% 0% 0% 100%)"]
+    : ["inset(0% 0% 100% 0%)", "inset(0% 0% 0% 0%)", "inset(0% 0% 0% 0%)", "inset(100% 0% 0% 0%)"];
+  return [
+    tw("fromTo", ".wipe", { clipPath: inFrom }, { clipPath: inTo, duration: 0.24, ease: "power3.in", immediateRender: false }, T - 0.24),
+    tw("fromTo", ".wipe", { clipPath: outFrom }, { clipPath: outTo, duration: 0.3, ease: "power3.out", immediateRender: false }, T + 0.03),
+  ];
 }
 
 function uniqueFonts(list: TypeFace[]): TypeFace[] {

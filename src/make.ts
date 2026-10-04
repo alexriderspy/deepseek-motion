@@ -1,4 +1,4 @@
-import { guide } from "./guide.ts";
+import { guide, seedOf } from "./guide.ts";
 import { check, formatProblems, type CheckResult } from "./validate.ts";
 import type { Spec } from "./spec.ts";
 
@@ -60,7 +60,7 @@ export interface MakeResult {
 export async function makeSpec(prompt: string, cfg: ModelConfig, opts: { maxAttempts?: number; log?: (s: string) => void } = {}): Promise<MakeResult> {
   const log = opts.log ?? (() => {});
   const messages: Msg[] = [
-    { role: "system", content: guide() },
+    { role: "system", content: guide(seedOf(prompt)) },
     { role: "user", content: prompt },
   ];
   const usage: Usage = { prompt: 0, completion: 0 };

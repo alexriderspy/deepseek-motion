@@ -76,13 +76,16 @@ claude mcp add deepseek-motion -- node /path/to/deepseek-motion/src/cli.ts mcp
 ## What's in the box
 
 **Scenes:** `title`, `statement` (with a highlighter sweep), `stat` (counts up), `list`, `quote`, `compare`,
-`bars`, `code` (types itself out), `end`.
+`bars`, `code` (types itself out), `flow` (stages joined by arrows, with data travelling through), `steps`
+(a tracker that ticks off each step), `end`.
 
 **Formats:** 16:9, 9:16, 1:1, 4:5, each with its own safe zones. Vertical formats keep clear of the
 Reels/TikTok UI and use bigger small text for phones.
 
-**Palettes:** midnight-lime, paper-ink, electric-blue, sunset-ember, mono-noir, mint-cream. Every one is
-contrast-tested, and small accent text is automatically shifted until it reads at 5:1.
+**Palettes:** midnight-lime, paper-ink, electric-blue, sunset-ember, mono-noir, ultraviolet, graphite-orange,
+arctic, mint-cream. Every one is contrast-tested, and small accent text is automatically shifted until it reads
+at 5:1. The model sees them in a different order for every prompt, because cheap models tend to take the first
+option offered.
 
 **Type pairs:** grotesk (Space Grotesk + Inter), editorial (Instrument Serif italic + Inter), mono-tech
 (JetBrains Mono), clean (Inter). Fonts ship with the project, so renders never depend on the network.
@@ -90,7 +93,10 @@ contrast-tested, and small accent text is automatically shifted until it reads a
 **Energies:** calm, smooth, snappy, bouncy. Each sets the easing, entrance length, stagger and travel distance.
 
 **Timing:** each beat lasts as long as its choreography plus the time it takes to read its words at
-3 words per second. The model can override that with `hold`, but the guide tells it not to.
+3 words per second. If the user asks for a length, the model sets `duration` and the holds flex to hit it
+exactly. If the beats can't fit, or can't fill it, the model is told how many beats to remove or add.
+
+**Transitions:** snappy and bouncy videos cut between beats with an accent-colored wipe; calm and smooth ones fade.
 
 ## Commands
 

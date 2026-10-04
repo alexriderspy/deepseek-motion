@@ -25,7 +25,7 @@ export const PALETTES: Record<string, Palette> = {
   "midnight-lime": {
     bg: "#0b0d10", surface: "#16191f", ink: "#f4f1ea", muted: "#8a8f98",
     accent: "#c6f432", onAccent: "#0b0d10", glow: "#c6f43233",
-    description: "near-black with acid lime; tech, launches, dev tools",
+    description: "near-black with acid lime; edgy launches, hype, showreels",
   },
   "paper-ink": {
     bg: "#f3efe6", surface: "#e8e2d4", ink: "#141414", muted: "#5f5b55",
@@ -35,7 +35,7 @@ export const PALETTES: Record<string, Palette> = {
   "electric-blue": {
     bg: "#070b24", surface: "#111840", ink: "#ffffff", muted: "#8e97c7",
     accent: "#3d6bff", onAccent: "#ffffff", glow: "#3d6bff40",
-    description: "deep navy with electric blue; AI, product, corporate-but-cool",
+    description: "deep navy with electric blue; AI products, startups, corporate-but-cool",
   },
   "sunset-ember": {
     bg: "#160d09", surface: "#24150e", ink: "#fff3e6", muted: "#b39a88",
@@ -46,6 +46,21 @@ export const PALETTES: Record<string, Palette> = {
     bg: "#000000", surface: "#141414", ink: "#ffffff", muted: "#8c8c8c",
     accent: "#ffffff", onAccent: "#000000", glow: "#ffffff1f",
     description: "pure black and white; minimal, luxury, serious",
+  },
+  "ultraviolet": {
+    bg: "#110b1f", surface: "#1d1433", ink: "#f3eeff", muted: "#a497c4",
+    accent: "#b98cff", onAccent: "#110b1f", glow: "#b98cff33",
+    description: "deep violet with lavender; developer tools, crypto, futuristic, music",
+  },
+  "graphite-orange": {
+    bg: "#121212", surface: "#1e1e1e", ink: "#f2f2f2", muted: "#9a9a9a",
+    accent: "#ff6a1a", onAccent: "#121212", glow: "#ff6a1a2e",
+    description: "graphite with safety orange; engineering, systems, trading, hardware",
+  },
+  "arctic": {
+    bg: "#f4f7fb", surface: "#e6ecf5", ink: "#0b1220", muted: "#56627a",
+    accent: "#2457e6", onAccent: "#ffffff", glow: "#2457e61f",
+    description: "bright white with cobalt; clean explainers, SaaS, docs, teaching",
   },
   "mint-cream": {
     bg: "#eaf4ee", surface: "#d9ece0", ink: "#0e2a1f", muted: "#4a6a5b",
@@ -88,7 +103,7 @@ export const TYPE_PAIRS: Record<string, TypePair> = {
     display: { family: "JetBrains Mono", file: "jetbrains-mono-latin-700-normal.woff2", weight: 700 },
     body: { family: "JetBrains Mono", file: "jetbrains-mono-latin-500-normal.woff2", weight: 500 },
     displayTracking: "-0.04em",
-    description: "monospace everywhere; code, hacker, terminal vibes",
+    description: "monospace everywhere; only when the video is mostly code or terminals",
   },
   clean: {
     display: { family: "Inter", file: "inter-latin-800-normal.woff2", weight: 800 },

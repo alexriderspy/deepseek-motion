@@ -77,3 +77,39 @@ test("every palette is readable", async () => {
     assert.ok(contrast(readable(p.accent, p.ink, p.bg), p.bg) >= 4.5, `${name} small accent text`);
   }
 });
+
+test("a requested duration is hit, and an impossible one asks to cut beats", () => {
+  const beats = [
+    { scene: "title", text: "Fifteen seconds flat" },
+    { scene: "steps", steps: ["One", "Two", "Three"] },
+    { scene: "flow", nodes: ["In", "Out"] },
+    { scene: "end", text: "Done" },
+  ];
+  for (const duration of [12, 18]) {
+    const res = check({ title: "t", duration, beats });
+    assert.ok(res.ok);
+    assert.ok(Math.abs(res.duration - duration) < 0.6, `${res.duration} vs ${duration}`);
+    assert.ok(Math.abs(compile(res.spec).duration - duration) < 0.6);
+  }
+  const tight = check({ title: "t", duration: 6, beats });
+  assert.ok(!tight.ok);
+  assert.match(tight.problems[0].message, /Remove \d+ beat/);
+  const long = check({ title: "t", duration: 60, beats });
+  assert.ok(!long.ok);
+  assert.match(long.problems[0].message, /Add about \d+ more beat/);
+});
+
+test("fast energies cut with a wipe, slow ones fade", () => {
+  const spec = (energy: string) => check({ title: "t", energy, beats: [{ scene: "title", text: "A" }, { scene: "end", text: "B" }] });
+  const snappy = spec("snappy"), calm = spec("calm");
+  assert.ok(snappy.ok && calm.ok);
+  assert.match(compile(snappy.spec).html, /class="wipe"/);
+  assert.doesNotMatch(compile(calm.spec).html, /class="wipe"/);
+});
+
+test("the guide lists options in a per-prompt order", async () => {
+  const { guide, seedOf } = await import("../src/guide.ts");
+  const first = (g: string) => g.split("Palettes:\n")[1].split("\n")[0];
+  const firsts = new Set(["a reel about cats", "launch video", "explain recursion", "recipe", "showreel"].map((p) => first(guide(seedOf(p)))));
+  assert.ok(firsts.size >= 3, [...firsts].join(" | "));
+});
