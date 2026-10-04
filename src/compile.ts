@@ -10,11 +10,13 @@ import { end, quote, statement, title } from "./scenes/text.ts";
 import { bars, compare, list, stat } from "./scenes/data.ts";
 import { code } from "./scenes/code.ts";
 import { flow, steps } from "./scenes/diagram.ts";
+import { custom } from "./scenes/custom.ts";
+import { RUNTIME } from "./custom.ts";
 
 const require = createRequire(import.meta.url);
 
 const SCENES: { [K in Beat["scene"]]: (b: Extract<Beat, { scene: K }>, c: Ctx) => SceneOut } = {
-  title, statement, stat, list, quote, compare, bars, code, flow, steps, end,
+  title, statement, stat, list, quote, compare, bars, code, flow, steps, custom, end,
 };
 
 export interface Timeline {
@@ -85,6 +87,7 @@ export function compile(spec: Spec): Compiled {
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=${fmt.width}, height=${fmt.height}" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; connect-src 'none'" />
 <title>${spec.title.replace(/</g, "&lt;")}</title>
 <script src="assets/gsap.min.js"></script>
 <style>
@@ -94,6 +97,7 @@ body { margin: 0; background: ${pal.bg}; }
   font-family: "${type.display.family}"; font-weight: ${type.display.weight}; font-style: ${type.display.style ?? "normal"};
   -webkit-font-smoothing: antialiased; }
 .bg { position: absolute; inset: 0; overflow: hidden; }
+.fontload { position: absolute; left: 0; top: 0; opacity: 0.001; font-size: 10px; pointer-events: none; }
 .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, ${dark ? "rgba(0,0,0,0.45)" : "rgba(60,40,20,0.10)"}); }
 .scene { position: absolute; inset: 0; }
 .stage { position: absolute; inset: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -112,11 +116,13 @@ ${css.join("\n")}
 <body>
 <div id="root" data-composition-id="main" data-start="0" data-width="${fmt.width}" data-height="${fmt.height}" data-duration="${total}" data-fps="30">
   <div class="bg">${bg.html}</div>
+  <div class="fontload" aria-hidden="true">${fonts.map((f) => `<span style="font-family:'${f.family}';font-weight:${f.weight};font-style:${f.style ?? "normal"}">Aa</span>`).join("")}</div>
   ${sections.join("\n  ")}
   ${wipe ? `<div class="wipe"></div>` : ""}
   <div class="vignette"></div>
 </div>
 <script>
+${spec.beats.some((b) => b.scene === "custom") ? RUNTIME : ""}
 const tl = gsap.timeline({ paused: true });
 ${wipe ? tw("set", ".wipe", { clipPath: "inset(0% 100% 0% 0%)" }, 0) : ""}
 ${bg.js.join("\n")}

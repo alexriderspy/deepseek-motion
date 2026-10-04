@@ -36,8 +36,8 @@ export function settleTimes(spec: Spec, tl: Timeline): number[] {
   });
 }
 
-export async function snapshot(dir: string, times: number[]): Promise<{ ok: boolean; files: string[]; output: string }> {
-  const out = join(dir, "snapshots");
+export async function snapshot(dir: string, times: number[], sub = "snapshots"): Promise<{ ok: boolean; files: string[]; output: string }> {
+  const out = join(dir, sub);
   const res = await run(["snapshot", dir, "--at", times.join(","), "--no-end", "--describe", "false", "-o", out], { quiet: true });
   const files = existsSync(out) ? readdirSync(out).filter((f) => f.endsWith(".png")).sort().map((f) => join(out, f)) : [];
   return { ok: res.code === 0, files, output: res.output };

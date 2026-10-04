@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Beat, Spec } from "./spec.ts";
-import { MAX_BEAT } from "./tokens.ts";
+import { FORMATS, MAX_BEAT } from "./tokens.ts";
+import { checkCode } from "./custom.ts";
 import { plan } from "./timing.ts";
 
 // Every message names the exact field and says how to fix it, so a cheap
@@ -76,6 +77,9 @@ function beatProblems(b: Beat, p: string): Problem[] {
       limitWords(out, `${p}.title`, b.title, 6);
       b.steps.forEach((st, i) => limitWords(out, `${p}.steps[${i}]`, st, 5));
       break;
+    case "custom":
+      limitWords(out, `${p}.brief`, b.brief, 50);
+      break;
     case "end":
       limitWords(out, `${p}.text`, b.text, 6);
       limitWords(out, `${p}.cta`, b.cta, 6);
@@ -89,12 +93,18 @@ function zodProblems(err: z.ZodError): Problem[] {
     const path = i.path.map((k) => (typeof k === "number" ? `[${k}]` : `.${String(k)}`)).join("").replace(/^\./, "") || "(root)";
     let message = i.message;
     if (i.code === "invalid_union" && i.path.at(-1) === "scene")
-      message = "Unknown scene. Use one of: title, statement, stat, list, quote, compare, bars, code, flow, steps, end.";
+      message = "Unknown scene. Use one of: title, statement, stat, list, quote, compare, bars, code, flow, steps, custom, end.";
     return { path, message };
   });
 }
 
-export function check(input: unknown): CheckResult {
+export interface CheckOptions {
+  // Custom beats must carry code (anything that builds the video). Off while
+  // a spec is still being written and code comes in a second step.
+  requireCode?: boolean;
+}
+
+export function check(input: unknown, opts: CheckOptions = {}): CheckResult {
   const parsed = Spec.safeParse(input);
   if (!parsed.success) {
     // Also run the copy checks on every beat that does parse, so the model
@@ -111,6 +121,16 @@ export function check(input: unknown): CheckResult {
   const spec = parsed.data;
 
   const problems = spec.beats.flatMap((b, i) => beatProblems(b, `beats[${i}]`));
+  const fmt = FORMATS[spec.format];
+  spec.beats.forEach((b, i) => {
+    if (b.scene !== "custom") return;
+    if (!b.code) {
+      if (opts.requireCode) problems.push({ path: `beats[${i}].code`, message: "Custom beat has no code. Write the body of draw(ctx, t, api) for its brief (see the custom scene API in the guide)." });
+      return;
+    }
+    const res = checkCode(b.code, { W: fmt.width, H: fmt.height, dur: b.seconds });
+    res.problems.forEach((m) => problems.push({ path: `beats[${i}].code`, message: m }));
+  });
   const pl = plan(spec);
   if (pl.overflow) {
     const avg = pl.overflow.minTotal / spec.beats.length;

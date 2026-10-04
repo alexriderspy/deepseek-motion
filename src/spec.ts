@@ -98,8 +98,15 @@ export const StepsBeat = z.object({
   hold,
 });
 
+export const CustomBeat = z.object({
+  scene: z.literal("custom"),
+  brief: z.string().min(1).describe("What this animated moment shows, concretely: subject, motion, the one line of text if any. Up to 50 words."),
+  seconds: z.number().min(2).max(12).default(5).describe("Length of the moment."),
+  code: z.string().optional().describe("Body of draw(ctx, t, api). Written in a second step from the brief; see the custom scene API."),
+});
+
 export const Beat = z.discriminatedUnion("scene", [
-  TitleBeat, StatementBeat, StatBeat, ListBeat, QuoteBeat, CompareBeat, BarsBeat, CodeBeat, FlowBeat, StepsBeat, EndBeat,
+  TitleBeat, StatementBeat, StatBeat, ListBeat, QuoteBeat, CompareBeat, BarsBeat, CodeBeat, FlowBeat, StepsBeat, CustomBeat, EndBeat,
 ]);
 export type Beat = z.infer<typeof Beat>;
 export type SceneName = Beat["scene"];

@@ -20,6 +20,7 @@ export function readingWords(b: Beat): number {
     case "end": return wc(b.text) + wc(b.cta);
     case "flow": return wc(b.title) + b.nodes.reduce((n, x) => n + wc(x), 0) + wc(b.caption);
     case "steps": return wc(b.title) + b.steps.reduce((n, x) => n + wc(x), 0);
+    case "custom": return 0;
   }
 }
 
@@ -38,6 +39,8 @@ export function introTime(b: Beat, e: Energy): number {
     case "end": return e.enter + 0.45;
     case "flow": return 0.25 + b.nodes.length * flowGap(e) + 0.4;
     case "steps": return 0.3 + b.steps.length * stepGap(e) + 0.2;
+    // A custom moment choreographs itself across its whole length.
+    case "custom": return b.seconds;
   }
 }
 
@@ -45,6 +48,7 @@ export const flowGap = (e: Energy) => Math.max(0.35, e.enter * 0.6);
 export const stepGap = (e: Energy) => Math.max(0.45, e.enter * 0.75);
 
 export function holdTime(b: Beat): number {
+  if (b.scene === "custom") return 0;
   if (b.hold !== undefined) return b.hold;
   return Math.max(MIN_HOLD, readingWords(b) / WORDS_PER_SECOND);
 }
@@ -74,7 +78,7 @@ export function plan(spec: Pick<Spec, "energy" | "beats" | "duration">): Plan {
     const available = spec.duration - fixed.reduce((a, b) => a + b, 0);
     const natural = holds.reduce((a, b) => a + b, 0);
     // Explicit per-beat holds stay as written; only computed holds flex.
-    const flex = spec.beats.map((b) => b.hold === undefined);
+    const flex = spec.beats.map((b) => b.scene !== "custom" && b.hold === undefined);
     const pinned = holds.reduce((a, h, i) => a + (flex[i] ? 0 : h), 0);
     const flexible = natural - pinned;
     const minTotal = fixed.reduce((a, b) => a + b, 0) + pinned + flex.filter(Boolean).length * SQUEEZE_MIN;
