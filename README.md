@@ -33,16 +33,21 @@ That spec was written by DeepSeek V4.1 Flash on its first try, in 4.4 seconds, f
 
 ## Quick start
 
-Needs Node 22.18+ and ffmpeg.
+Needs Node 22.18+ and ffmpeg. One command makes a finished, vertical reel with music:
 
 ```bash
-npm install
-export DEEPSEEK_API_KEY=sk-...
-node src/cli.ts make "a 20 second reel explaining RAG for CS students, playful" --format 9:16
+DEEPSEEK_API_KEY=sk-... npx github:alexriderspy/deepseek-motion reel "why chai is better than coffee"
 ```
 
-You get `out/<title>/` with `spec.json`, `index.html` (the HyperFrames project), one preview PNG per beat in
-`snapshots/`, and `final.mp4`.
+It writes `out/<title>/final.mp4`, plus the spec, the HyperFrames project and one preview frame per scene.
+Use `make` instead of `reel` for other formats (`--format 16:9`, `1:1`, `4:5`).
+
+### Music
+
+Every video gets its own score from a small built-in synthesizer: the style follows the video's energy
+(ambient, lo-fi, house or playful), the key and chords vary with the title, and a soft whoosh lands on every
+scene cut. It needs no account or download, and the result is yours to use anywhere. To use your own track
+instead, pass `--music song.mp3`; for silence, `--no-music`.
 
 ## Other models
 
