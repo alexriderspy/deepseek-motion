@@ -9,15 +9,16 @@
   },
   "files": [
     "dist",
-    "assets",
-    "examples"
+    "examples",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",
     "dev": "node src/cli.ts",
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "matrix": "node scripts/matrix.ts"
+    "matrix": "node scripts/matrix.ts",
+    "prepare": "tsc"
   },
   "engines": {
     "node": ">=22.18"

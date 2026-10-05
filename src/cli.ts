@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { check, formatProblems } from "./validate.ts";
@@ -11,6 +11,7 @@ import type { Spec } from "./spec.ts";
 
 const HELP = `deepseek-motion: motion graphics from any LLM
 
+  deepseek-motion reel "<idea>"     make a vertical reel with music, ready to post
   deepseek-motion make "<prompt>"   ask a model for a spec, then build it
   deepseek-motion check <spec.json> validate a spec
   deepseek-motion build <spec.json> write the HyperFrames project
@@ -26,6 +27,8 @@ Options:
   --model <id>           make: model id (default: deepseek-flash)
   --base-url <url>       make: OpenAI-compatible endpoint (default: DeepSeek)
   --no-render            make: stop after preview frames
+  --music <file>         use your own track instead of the generated score
+  --no-music             leave the video silent
   --review-rounds <n>    make: times the model reviews and redraws its custom scenes (default 1)
 
 Env: DEEPSEEK_API_KEY, or DEEPSEEK_MOTION_API_KEY + DEEPSEEK_MOTION_BASE_URL + DEEPSEEK_MOTION_MODEL.`;
@@ -39,6 +42,8 @@ const { values: o, positionals } = parseArgs({
     model: { type: "string" },
     "base-url": { type: "string" },
     "no-render": { type: "boolean", default: false },
+    music: { type: "string" },
+    "no-music": { type: "boolean", default: false },
     "review-rounds": { type: "string", default: "1" },
     help: { type: "boolean", short: "h" },
   },
@@ -48,6 +53,8 @@ const [cmd, arg] = positionals;
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "video";
 const outDir = (spec: Spec) => resolve(o.out ?? join("out", slug(spec.title)));
 const quality = o.quality as "draft" | "looks" | "delivery";
+const music = o["no-music"] ? "none" : o.music ? resolve(o.music) : "auto";
+if (music !== "auto" && music !== "none" && !existsSync(music)) die(`music file not found: ${o.music}`);
 
 function loadSpec(path: string | undefined): Spec {
   if (!path) die("missing <spec.json>");
@@ -65,7 +72,7 @@ function die(msg: string): never {
 async function build(spec: Spec, opts: { preview?: boolean; render?: boolean }) {
   const dir = outDir(spec);
   mkdirSync(dir, { recursive: true });
-  const c = writeProject(spec, dir);
+  const c = writeProject(spec, dir, { music: opts.render ? music : "none" });
   console.log(`built ${c.beats.length} beats, ${c.duration}s, ${spec.format} -> ${dir}`);
   const l = await lint(dir);
   if (!l.ok) die(`hyperframes check failed:\n${l.output}`);
@@ -96,8 +103,9 @@ if (o.help || !cmd) {
   await build(loadSpec(arg), { preview: true });
 } else if (cmd === "render") {
   await build(loadSpec(arg), { render: true });
-} else if (cmd === "make") {
-  if (!arg) die('usage: deepseek-motion make "<prompt>"');
+} else if (cmd === "make" || cmd === "reel") {
+  if (!arg) die(`usage: deepseek-motion ${cmd} "<idea>"`);
+  if (cmd === "reel") o.format ??= "9:16";
   const cfg = modelConfig({ model: o.model, baseUrl: o["base-url"] });
   if (!cfg.apiKey && !/localhost|127\.0\.0\.1/.test(cfg.baseUrl)) die("no API key: set DEEPSEEK_API_KEY or DEEPSEEK_MOTION_API_KEY");
   const prompt = o.format ? `${arg}\n\nUse format "${o.format}".` : arg;
@@ -118,7 +126,7 @@ if (o.help || !cmd) {
   mkdirSync(dir, { recursive: true });
   const reviews: Review[][] = [];
   for (let round = 0; round < Number(o["review-rounds"]) && customs.length; round++) {
-    const c = writeProject(res.spec, dir);
+    const c = writeProject(res.spec, dir, { music: "none" });
     const times = customs.flatMap(({ i }) => [0.35, 0.65, 0.95].map((k) => +(c.beats[i].start + c.beats[i].duration * k).toFixed(2)));
     const s = await snapshot(dir, times, `review-${round}`);
     if (!s.ok) die(s.output);

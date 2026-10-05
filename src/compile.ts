@@ -1,6 +1,8 @@
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { dirname, extname, join } from "node:path";
+import { compose, writeWav } from "./music.ts";
+import { seedOf } from "./guide.ts";
 import type { Beat, Spec } from "./spec.ts";
 import { introTime, plan } from "./timing.ts";
 import { BODY_STRONG, ENERGIES, FONT_SOURCES, FORMATS, MONO, PALETTES, QUOTE_MARK, TYPE_PAIRS, TYPE_SCALE, type TypeFace } from "./tokens.ts";
@@ -34,7 +36,7 @@ const isDark = (hex: string) => {
   return ((n >> 16) & 255) * 0.299 + ((n >> 8) & 255) * 0.587 + (n & 255) * 0.114 < 128;
 };
 
-export function compile(spec: Spec): Compiled {
+export function compile(spec: Spec, opts: { music?: string } = {}): Compiled {
   const fmt = FORMATS[spec.format];
   const base = PALETTES[spec.palette];
   const pal = { ...base, accentText: readable(base.accent, base.ink, base.bg), accentOnSurface: readable(base.accent, base.ink, base.surface) };
@@ -121,6 +123,7 @@ ${css.join("\n")}
   ${sections.join("\n  ")}
   ${wipe ? `<div class="wipe"></div>` : ""}
   <div class="vignette"></div>
+  ${opts.music ? `<audio id="music" src="${opts.music}" data-start="0" data-duration="${total}" data-volume="0.85"></audio>` : ""}
 </div>
 <script>
 ${spec.beats.some((b) => b.scene === "custom") ? RUNTIME : ""}
@@ -179,9 +182,23 @@ function background(kind: Spec["background"], pal: (typeof PALETTES)[string], sh
   return out;
 }
 
-export function writeProject(spec: Spec, dir: string): Compiled {
-  const c = compile(spec);
+// music: "auto" scores the video with the built-in synth, "none" leaves it
+// silent, anything else is a path to the user's own track.
+export function writeProject(spec: Spec, dir: string, opts: { music?: string } = {}): Compiled {
+  const music = opts.music ?? "auto";
   mkdirSync(join(dir, "assets", "fonts"), { recursive: true });
+  let src: string | undefined;
+  if (music === "auto") {
+    const draft = compile(spec);
+    writeWav(join(dir, "assets", "music.wav"), compose({
+      duration: draft.duration, energy: spec.energy, seed: seedOf(spec.title), cuts: draft.beats.slice(1).map((b) => b.start),
+    }));
+    src = "assets/music.wav";
+  } else if (music !== "none") {
+    src = `assets/music${extname(music) || ".mp3"}`;
+    copyFileSync(music, join(dir, src));
+  }
+  const c = compile(spec, { music: src });
   for (const f of c.fonts) {
     const pkgDir = dirname(require.resolve(`${FONT_SOURCES[f.family]}/package.json`));
     copyFileSync(join(pkgDir, "files", f.file), join(dir, "assets", "fonts", f.file));

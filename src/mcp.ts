@@ -29,17 +29,17 @@ server.registerTool("motion_check", {
   description: "Validate a spec without building it. Returns the total duration, or a list of problems with the exact field and how to fix each one.",
   inputSchema: { spec: specArg },
 }, async ({ spec }) => {
-  const res = check(spec);
+  const res = check(spec, { requireCode: true });
   if (!res.ok) return fail(`Spec has problems. Fix these and call again:\n${formatProblems(res.problems)}`);
   return text(`ok: ${res.spec.beats.length} beats, ${res.duration.toFixed(1)}s${res.warnings.length ? `\nwarnings:\n${formatProblems(res.warnings)}` : ""}`);
 });
 
-function prepare(spec: unknown, out?: string) {
-  const res = check(spec);
+function prepare(spec: unknown, out?: string, music = "none") {
+  const res = check(spec, { requireCode: true });
   if (!res.ok) return { error: `Spec has problems. Fix these and call again:\n${formatProblems(res.problems)}` } as const;
   const dir = resolve(out ?? join("out", slug(res.spec.title)));
   mkdirSync(dir, { recursive: true });
-  return { spec: res.spec, dir, compiled: writeProject(res.spec, dir), warnings: res.warnings } as const;
+  return { spec: res.spec, dir, compiled: writeProject(res.spec, dir, { music }), warnings: res.warnings } as const;
 }
 
 server.registerTool("motion_preview", {
@@ -76,9 +76,10 @@ server.registerTool("motion_render", {
     spec: specArg,
     out: outArg,
     quality: z.enum(["draft", "looks", "delivery"]).optional().describe("draft is fastest; looks is the default; delivery is highest quality."),
+    music: z.string().optional().describe('"auto" (default) scores the video with the built-in synth, "none" is silent, or a path to an audio file.'),
   },
-}, async ({ spec, out, quality }) => {
-  const p = prepare(spec, out);
+}, async ({ spec, out, quality, music }) => {
+  const p = prepare(spec, out, music ?? "auto");
   if ("error" in p) return fail(p.error!);
   const file = join(p.dir, "final.mp4");
   const r = await render(p.dir, file, quality ?? "looks");
